@@ -28,10 +28,12 @@ class fSatu : Fragment() {
     private lateinit var scoreTextView: TextView
     private lateinit var numberButtons: List<TextView>
     private lateinit var numberList: List<Int>
-    private var correctNumber: Int = 0
+
+    private var firstButton: TextView? = null
+    private var secondButton: TextView? = null
 
     private var batasAwal: Int = 1
-    private var batasAkhir: Int = 5
+    private var batasAkhir: Int = 6
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +42,7 @@ class fSatu : Fragment() {
             param2 = it.getString(ARG_PARAM2)
 
             batasAwal = it.getInt("batasAwal", 1)
-            batasAkhir = it.getInt("batasAkhir", 5)
+            batasAkhir = it.getInt("batasAkhir", 6)
         }
     }
 
@@ -64,23 +66,19 @@ class fSatu : Fragment() {
             view.findViewById(R.id.button6_text),
             view.findViewById(R.id.button7_text),
             view.findViewById(R.id.button8_text),
-            view.findViewById(R.id.button9_text)
+            view.findViewById(R.id.button9_text),
+            view.findViewById(R.id.button10_text),
+            view.findViewById(R.id.button11_text),
+            view.findViewById(R.id.button12_text)
         )
 
-        if (arguments != null) {
-            updateGenerateNumbers(batasAwal, batasAkhir)
-        } else {
-            generateRandomNumbers()
-        }
+        updateGenerateNumbers(batasAwal, batasAkhir)
 
-        // Set up event listener pada setiap tombol
         numberButtons.forEachIndexed { index, button ->
-            button.text = numberList[index].toString() // Tampilkan angka acak
-            button.setOnClickListener { checkGuess(numberList[index]) }
+            button.text = "?" // Inisialisasi sebagai tanda tanya
+            button.setOnClickListener { onButtonClicked(button, numberList[index]) }
         }
 
-
-        // Update score awal
         updateScore()
 
         view.findViewById<LinearLayout>(R.id.button_giveup).setOnClickListener {
@@ -90,75 +88,70 @@ class fSatu : Fragment() {
         return view
     }
 
-    private fun generateRandomNumbers() {
-        // Buat daftar angka dari 1 hingga 5, masing-masing muncul 2 kali
-        numberList = (1..5).flatMap { listOf(it, it) }.shuffled()
-
-        // Pilih salah satu angka sebagai angka benar
-        correctNumber = numberList.random()
-    }
-
-    fun updateGenerateNumbers(batasAwal: Int, batasAkhir: Int) {
-        // Perbarui angka acak sesuai batas yang diterima
+    private fun updateGenerateNumbers(batasAwal: Int, batasAkhir: Int) {
         numberList = (batasAwal..batasAkhir).flatMap { listOf(it, it) }.shuffled()
-        correctNumber = numberList.random()
+    }
 
-        numberButtons.forEachIndexed { index, button ->
-            button.text = numberList[index].toString()
+    private fun onButtonClicked(button: TextView, number: Int) {
+        if (firstButton == null) {
+            // Simpan tombol pertama dan menampilkan angkanya
+            firstButton = button
+            firstButton?.text = number.toString()
+        } else if (secondButton == null && button != firstButton) {
+            // Simpan tombol kedua dan menampilkan angkanya
+            secondButton = button
+            secondButton?.text = number.toString()
+
+            // Sebelum pengecekan terdapat delay
+            button.postDelayed({
+                if (firstButton?.text == secondButton?.text) {
+                    // Jika cocok, tambahkan skor dan sembunyikan tombol
+                    score += 10
+                    firstButton?.visibility = View.INVISIBLE
+                    secondButton?.visibility = View.INVISIBLE
+                } else {
+                    // Jika tidak cocok, kurangi skor dan reset tombol
+                    score -= 5
+                    resetButtons()
+                }
+                updateScore()
+
+                // Reset firstButton dan secondButton setelah pengecekan
+                firstButton = null
+                secondButton = null
+
+                // Panggil endGame() jika semua tombol sudah disembunyikan
+                if (numberButtons.all { it.visibility == View.INVISIBLE }) {
+                    endGame()
+                }
+            }, 1000) // Delay 1 detik (1000 ms)
         }
     }
 
-    private fun checkGuess(guess: Int) {
-        if (guess == correctNumber) {
-            score += 10  // Jika benar, tambah score 10
-        } else {
-            score -= 5  // Jika salah, kurangi score 5
-        }
-        updateScore()
+
+
+    private fun resetButtons() {
+        firstButton?.text = "?"
+        secondButton?.text = "?"
     }
 
     private fun updateScore() {
         scoreTextView.text = score.toString()
-
-        // Periksa kondisi untuk memanggil endGame jika score mencapai batas
-        if (score >= 100 || score < 0) {
+        if (score < 0) {
             endGame()
         }
     }
 
     private fun endGame() {
-        // Buat instance dari fDua
         val fDuaFragment = fDua()
-        // Set nilai score akhir ke fDua
         fDuaFragment.setFinalScore(score)
-
-        // Ganti fragment ke fDua
         parentFragmentManager.beginTransaction()
             .replace(R.id.frameContainer, fDuaFragment)
             .addToBackStack(null)
             .commit()
     }
 
-    fun updateRandomNumberRange(batasAwal: Int, batasAkhir: Int) {
-        numberList = (batasAwal..batasAkhir).flatMap { listOf(it, it) }.shuffled()
-        correctNumber = numberList.random()
-
-        // Update tombol-tombol dengan angka baru
-        numberButtons.forEachIndexed { index, button ->
-            button.text = numberList[index].toString()
-        }
-    }
-
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment fSatu.
-         */
-        // TODO: Rename and change types and number of parameters
         @JvmStatic
         fun newInstance(batasAwal: Int, batasAkhir: Int): fSatu {
             val fragment = fSatu()
