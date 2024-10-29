@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -21,6 +22,8 @@ class fDua : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
 
+    private var finalScore: Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
@@ -33,8 +36,20 @@ class fDua : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_f_dua, container, false)
+
+        val view = inflater.inflate(R.layout.fragment_f_dua, container, false)
+
+        // Referensi ke TextView untuk menampilkan nilai akhir
+        val finalScoreTextView: TextView = view.findViewById(R.id.textViewFinalScore)
+        finalScoreTextView.text = finalScore.toString()
+
+
+        return view
+    }
+
+    // Method untuk menerima score akhir dari fSatu
+    fun setFinalScore(score: Int) {
+        finalScore = score
     }
 
     companion object {
